@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "wesley"
+version = "0.1.0"
+description = "A hungry, hypermedia-happy, static-site generator"
+authors = ["Mitch Burton <mitch@mitchellburton.ca>"]
+license = "GPLv3"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+Markdown = "^3.5.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+tox = "^4.12.1"
+mypy = "^1.8.0"
+ruff = "^0.2.1"
+pytest-coverage = "^0.0"
+
+[tool.poetry.scripts]
+wesley = "wesley.cli:main"
+
+[tool.ruff.format]
+quote-style = "single"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
