@@ -5,7 +5,7 @@ tmp/
 
 *.py[cod]
 *.egg
-.converage
+.coverage
 .flake8
 build
 dist
