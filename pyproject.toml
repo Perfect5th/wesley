@@ -43,6 +43,10 @@ pytest-coverage = "^0.0"
 [tool.poetry.scripts]
 wesley = "wesley.cli:wesley"
 
+[tool.coverage.run]
+omit = ["__main__.py"]
+
+
 [tool.ruff.format]
 quote-style = "single"
 

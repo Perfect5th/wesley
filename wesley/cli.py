@@ -17,17 +17,39 @@ not, see <https://www.gnu.org/licenses/>.
 """
 import argparse
 import sys
+import tarfile
 
-from . import VERSION, WESLEY
+from . import SOURCE_DIR, VERSION, WESLEY
+
+
+def init(args: argparse.Namespace):
+    """Initializes a wesley project in `directory` by extracting the template tarball."""
+    directory = args.directory or '.'
+
+    print('Initializing wesley project')
+
+    project_tarfile = tarfile.open(SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz')
+    project_tarfile.extractall(directory)
+
+    print(f"{WESLEY} He's ready!")
 
 
 def wesley():
-    """The main entry-point for wesley. Parses CLI parameters and triages accordingly.
-    """
+    """The main entry-point for wesley. Parses CLI parameters and triages accordingly."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', '-v', action='version', version=f'wesley {VERSION} {WESLEY}')
-    parser.parse_args(sys.argv)
+    parser.add_argument(
+        '--version', '-v', action='version', version=f'wesley {VERSION} {WESLEY}'
+    )
+
+    subparsers = parser.add_subparsers()
+
+    parser_init = subparsers.add_parser('init')
+    parser_init.set_defaults(func=init)
+    parser_init.add_argument('--directory', '-d')
+
+    args = parser.parse_args(sys.argv[1:])
+    args.func(args)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     wesley()

@@ -15,3 +15,6 @@ PURPOSE. See the GNU General Public License for more details.
 You should have received a copy of the GNU General Public License along with wesley. If
 not, see <https://www.gnu.org/licenses/>.
 """
+import pathlib
+
+SOURCE_DIR = pathlib.Path(__file__).parent.parent
