@@ -16,46 +16,91 @@ You should have received a copy of the GNU General Public License along with wes
 not, see <https://www.gnu.org/licenses/>.
 """
 import argparse
+import pathlib
 import sys
-import tarfile
 from unittest import mock
 
 import pytest
 
-from wesley import SOURCE_DIR, VERSION, WESLEY, cli
+from wesley import VERSION, WESLEY, cli
 
 
-def test_init(capsys, monkeypatch) -> None:
-    """When called with a directory path, `init` initializes a wesley project at that
-    path.
+@pytest.mark.parametrize(
+    'arg_directory,target_directory,expected_output',
+    [
+        (None, pathlib.Path.cwd(), 'Initializing wesley project'),
+        (
+            '/supper/time',
+            pathlib.Path('/supper/time'),
+            'Initializing wesley project in /supper/time',
+        ),
+    ],
+)
+def test_init_success(
+    arg_directory, target_directory, expected_output, capsys, monkeypatch
+) -> None:
+    """When called with no specified directory, `init` initializes a wesley project at
+    that path.
     """
-    tarfile_open_mock = mock.Mock()
+    is_dir_mock = mock.Mock(return_value=True)
+    glob_mock = mock.Mock(return_value=[])
+    init_directory_mock = mock.Mock()
 
-    monkeypatch.setattr(tarfile, 'open', tarfile_open_mock)
+    monkeypatch.setattr(pathlib.Path, 'is_dir', is_dir_mock)
+    monkeypatch.setattr(pathlib.Path, 'glob', glob_mock)
+    monkeypatch.setattr(cli, 'init_directory', init_directory_mock)
 
-    cli.init(argparse.Namespace(directory=None))
+    assert cli.init(argparse.Namespace(directory=arg_directory)) == 0
 
-    tarfile_open_mock.assert_called_once_with(
-        SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz'
-    )
+    is_dir_mock.assert_called_once()
+    glob_mock.assert_called_once()
+    init_directory_mock.assert_called_once_with(target_directory)
 
     out = capsys.readouterr().out
-    assert 'Initializing wesley project' in out
+    assert expected_output in out
     assert WESLEY in out
 
 
-def test_wesley_version(capsys, monkeypatch) -> None:
+def test_init_not_dir(capsys, monkeypatch) -> None:
+    """When called with a non-directory path, `init` prints an error and returns 1."""
+    is_dir_mock = mock.Mock(return_value=False)
+
+    monkeypatch.setattr(pathlib.Path, 'is_dir', is_dir_mock)
+
+    assert cli.init(argparse.Namespace(directory=None)) == 1
+
+    is_dir_mock.assert_called_once()
+
+    outerr = capsys.readouterr()
+    assert 'is not a directory' in outerr.err
+    assert WESLEY not in outerr.out
+
+
+def test_init_not_empty(capsys, monkeypatch) -> None:
+    """When called with a non-empty directory path, `init` prints an error and returns
+    1.
+    """
+    is_dir_mock = mock.Mock(return_value=True)
+    glob_mock = mock.Mock(return_value=['yusss'])
+
+    monkeypatch.setattr(pathlib.Path, 'is_dir', is_dir_mock)
+    monkeypatch.setattr(pathlib.Path, 'glob', glob_mock)
+
+    assert cli.init(argparse.Namespace(directory=None)) == 1
+
+    is_dir_mock.assert_called_once()
+
+    outerr = capsys.readouterr()
+    assert 'is not empty' in outerr.err
+    assert WESLEY not in outerr.out
+
+
+@pytest.mark.parametrize('version_arg', ['-v', '--version'])
+def test_wesley_version(version_arg, capsys, monkeypatch) -> None:
     """when called with '-v' or '--version', `wesley` prints his version number and then
     exits.
     """
-    monkeypatch.setattr(sys, 'argv', ['wesley', '-v'])
-
-    with pytest.raises(SystemExit):
-        cli.wesley()
-
-    assert VERSION in capsys.readouterr().out
-
-    monkeypatch.setattr(sys, 'argv', ['wesley', '--version'])
+    monkeypatch.setattr(sys, 'argv', ['wesley', version_arg])
 
     with pytest.raises(SystemExit):
         cli.wesley()
@@ -63,35 +108,34 @@ def test_wesley_version(capsys, monkeypatch) -> None:
     assert VERSION in capsys.readouterr().out
 
 
-def test_wesley_init(capsys, monkeypatch) -> None:
+@pytest.mark.parametrize(
+    'directory_args', [('--directory', '/my/meowy/boy'), ('-d', '/my/hungry/lad')]
+)
+def test_wesley_init(directory_args, capsys, monkeypatch) -> None:
     """When called with 'init', `wesley` calls `init` on the given directory and prints
     an appropriate message.
     """
-    init_mock = mock.Mock()
+    sys_exit_mock = mock.Mock()
+    init_mock = mock.Mock(return_value=0)
 
     monkeypatch.setattr(sys, 'argv', ['wesley', 'init'])
+    monkeypatch.setattr(sys, 'exit', sys_exit_mock)
     monkeypatch.setattr(cli, 'init', init_mock)
 
     cli.wesley()
 
+    sys_exit_mock.assert_called_once_with(0)
     init_mock.assert_called_once_with(
         argparse.Namespace(directory=None, func=init_mock)
     )
 
-    monkeypatch.setattr(sys, 'argv', ['wesley', 'init', '--directory', '/my/meowy/boy'])
+    monkeypatch.setattr(sys, 'argv', ['wesley', 'init', *directory_args])
+    sys_exit_mock.reset_mock()
     init_mock.reset_mock()
 
     cli.wesley()
 
+    sys_exit_mock.assert_called_once_with(0)
     init_mock.assert_called_once_with(
-        argparse.Namespace(directory='/my/meowy/boy', func=init_mock)
-    )
-
-    monkeypatch.setattr(sys, 'argv', ['wesley', 'init', '-d', '/my/hungry/lad'])
-    init_mock.reset_mock()
-
-    cli.wesley()
-
-    init_mock.assert_called_once_with(
-        argparse.Namespace(directory='/my/hungry/lad', func=init_mock)
+        argparse.Namespace(directory=directory_args[1], func=init_mock)
     )

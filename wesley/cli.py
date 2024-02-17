@@ -16,22 +16,44 @@ You should have received a copy of the GNU General Public License along with wes
 not, see <https://www.gnu.org/licenses/>.
 """
 import argparse
+import pathlib
 import sys
 import tarfile
 
 from . import SOURCE_DIR, VERSION, WESLEY
 
 
-def init(args: argparse.Namespace):
+def init(args: argparse.Namespace) -> int:
     """Initializes a wesley project in `directory` by extracting the template tarball."""
-    directory = args.directory or '.'
+    if args.directory:
+        directory_path = pathlib.Path(args.directory)
+    else:
+        directory_path = pathlib.Path.cwd()
 
-    print('Initializing wesley project')
+    if not directory_path.is_dir():
+        print(f'{directory_path} is not a directory', file=sys.stderr)
+        return 1
 
-    project_tarfile = tarfile.open(SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz')
-    project_tarfile.extractall(directory)
+    if list(directory_path.glob('*')):
+        print(f'{directory_path} is not empty', file=sys.stderr)
+        return 1
+
+    if directory_path != pathlib.Path.cwd():
+        print(f'Initializing wesley project in {directory_path}')
+    else:
+        print('Initializing wesley project')
+
+    init_directory(directory_path)
 
     print(f"{WESLEY} He's ready!")
+
+    return 0
+
+
+def init_directory(directory: pathlib.Path) -> None:
+    """Extracts the template tarball into `directory`."""
+    project_tarfile = tarfile.open(SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz')
+    project_tarfile.extractall(directory)
 
 
 def wesley():
@@ -48,7 +70,7 @@ def wesley():
     parser_init.add_argument('--directory', '-d')
 
     args = parser.parse_args(sys.argv[1:])
-    args.func(args)
+    sys.exit(args.func(args))
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -66,10 +66,7 @@ def test_init() -> None:
 
 
 def test_init_refuses_non_empty() -> None:
-    """Executing `wesley init` on a non-empty directory results in an error.
-
-    TODO: get this test passing.
-    """
+    """Executing `wesley init` on a non-empty directory results in an error."""
     with tempfile.TemporaryDirectory() as tempdir:
         shutil.copy(__file__, tempdir)
 
