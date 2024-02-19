@@ -23,6 +23,17 @@ import tarfile
 from . import SOURCE_DIR, VERSION, WESLEY
 
 
+def build(_: argparse.Namespace) -> int:
+    """Builds a wesley project, turning Markdown files in 'site' into HTML files in
+    '_site'.
+    """
+    print('Building wesley project...')
+
+    print(f"{WESLEY} He's built!")
+
+    return 0
+
+
 def init(args: argparse.Namespace) -> int:
     """Initializes a wesley project in `directory` by extracting the template tarball."""
     if args.directory:
@@ -64,6 +75,9 @@ def wesley():
     )
 
     subparsers = parser.add_subparsers()
+
+    parser_build = subparsers.add_parser('build')
+    parser_build.set_defaults(func=build)
 
     parser_init = subparsers.add_parser('init')
     parser_init.set_defaults(func=init)

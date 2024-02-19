@@ -20,13 +20,14 @@ import pathlib
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import tomllib
 from typing import Any
 
 import pytest
 
-from wesley import SOURCE_DIR, VERSION
+from wesley import SOURCE_DIR, VERSION, WESLEY
 
 PROJECT_DIR = SOURCE_DIR.parent
 
@@ -45,6 +46,26 @@ def run_wesley(*cli_args: str, **run_kwargs: Any) -> subprocess.CompletedProcess
     )
 
 
+def test_build() -> None:
+    """Executing `wesley build` results in a tree of HTML files mirroring the files in
+    the 'site' directory.
+    """
+    with tempfile.TemporaryDirectory() as tempdir:
+        sample_tarfile = tarfile.open(PROJECT_DIR / 'tests' / 'fixtures' / 'sample.tar.gz')
+        sample_tarfile.extractall(tempdir)
+
+        stdout = run_wesley('build', cwd=tempdir).stdout
+
+        assert WESLEY in stdout
+        assert 'Building' in stdout
+        assert "He's built" in stdout
+
+        tempdir_path = pathlib.Path(tempdir)
+
+        assert (tempdir_path / '_site').is_dir()
+        assert (tempdir_path / '_site' / 'index.html').is_file()
+
+
 def test_init() -> None:
     """Executing `wesley init` results in a reasonable directory layout with which to
     start a static site.
@@ -55,12 +76,10 @@ def test_init() -> None:
         stdout = run_wesley('init', cwd=tempdir).stdout
 
         assert stdout
-        assert '\N{CAT}\N{ZWJ}\N{BLACK LARGE SQUARE}' in stdout
+        assert WESLEY in stdout
 
         tempdir_path = pathlib.Path(tempdir)
-        contents = list(tempdir_path.glob('*'))
 
-        assert tempdir_path / 'site' in contents
         assert (tempdir_path / 'site').is_dir()
         assert (tempdir_path / 'site' / 'index.md').is_file()
 
@@ -89,12 +108,12 @@ def test_version() -> None:
 
     stdout = run_wesley('-v').stdout
 
-    assert '\N{CAT}\N{ZWJ}\N{BLACK LARGE SQUARE}' in stdout
+    assert WESLEY in stdout
     assert stdout
     assert VERSION in stdout
 
     stdout = run_wesley('--version').stdout
 
-    assert '\N{CAT}\N{ZWJ}\N{BLACK LARGE SQUARE}' in stdout
+    assert WESLEY in stdout
     assert stdout
     assert VERSION in stdout

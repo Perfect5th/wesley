@@ -18,11 +18,12 @@ not, see <https://www.gnu.org/licenses/>.
 import argparse
 import pathlib
 import sys
+import tarfile
 from unittest import mock
 
 import pytest
 
-from wesley import VERSION, WESLEY, cli
+from wesley import SOURCE_DIR, VERSION, WESLEY, cli
 
 
 @pytest.mark.parametrize(
@@ -93,6 +94,20 @@ def test_init_not_empty(capsys, monkeypatch) -> None:
     outerr = capsys.readouterr()
     assert 'is not empty' in outerr.err
     assert WESLEY not in outerr.out
+
+
+def test_init_directory(monkeypatch) -> None:
+    """`init_directory` untars the project tarball in the provided directory."""
+    tarfile_mock = mock.Mock(spec_set=tarfile.TarFile)
+    open_mock = mock.Mock(return_value=tarfile_mock)
+    path = pathlib.Path('/direct/eye/contact')
+
+    monkeypatch.setattr(tarfile, 'open', open_mock)
+
+    cli.init_directory(path)
+
+    open_mock.assert_called_once_with(SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz')
+    tarfile_mock.extractall.assert_called_once_with(path)
 
 
 @pytest.mark.parametrize('version_arg', ['-v', '--version'])
