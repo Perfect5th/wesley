@@ -21,13 +21,32 @@ import sys
 import tarfile
 
 from . import SOURCE_DIR, VERSION, WESLEY
+from .build import build_site
+from .settings import Settings
 
 
 def build(_: argparse.Namespace) -> int:
     """Builds a wesley project, turning Markdown files in 'site' into HTML files in
     '_site'.
     """
+    settings = Settings(pathlib.Path.cwd() / 'wesley.toml')
+
+    if settings.errors:
+        print('wesley settings invalid:', file=sys.stderr)
+        print('  - ' + '\n  - '.join(settings.errors), file=sys.stderr)
+        return 1
+
     print('Building wesley project...')
+
+    errors = build_site(settings)
+
+    for error in errors:
+        print(error)
+
+    if errors:
+        print('errors encountered during build:', file=sys.stderr)
+        print('  - ' + '\n  - '.join(errors), file=sys.stderr)
+        return 1
 
     print(f"{WESLEY} He's built!")
 

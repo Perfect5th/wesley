@@ -51,16 +51,17 @@ def test_build() -> None:
     the 'site' directory.
     """
     with tempfile.TemporaryDirectory() as tempdir:
-        sample_tarfile = tarfile.open(PROJECT_DIR / 'tests' / 'fixtures' / 'sample.tar.gz')
-        sample_tarfile.extractall(tempdir)
+        tempdir_path = pathlib.Path(tempdir)
+        sample_tarfile = tarfile.open(
+            PROJECT_DIR / 'tests' / 'fixtures' / 'sample.tar.gz'
+        )
+        sample_tarfile.extractall(tempdir_path / 'site')
 
         stdout = run_wesley('build', cwd=tempdir).stdout
 
         assert WESLEY in stdout
         assert 'Building' in stdout
         assert "He's built" in stdout
-
-        tempdir_path = pathlib.Path(tempdir)
 
         assert (tempdir_path / '_site').is_dir()
         assert (tempdir_path / '_site' / 'index.html').is_file()

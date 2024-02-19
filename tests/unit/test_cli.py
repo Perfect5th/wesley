@@ -23,7 +23,62 @@ from unittest import mock
 
 import pytest
 
-from wesley import SOURCE_DIR, VERSION, WESLEY, cli
+from wesley import SOURCE_DIR, VERSION, WESLEY, build, cli, settings
+
+
+def test_build(capsys, monkeypatch) -> None:
+    """When called, `build` produces calls `build_site`."""
+    settings_mock = mock.Mock(spec=settings.Settings, errors=[])
+    settings_class_mock = mock.Mock(spec=type, return_value=settings_mock)
+    build_site_mock = mock.Mock(spec=build.build_site, return_value=[])
+
+    monkeypatch.setattr(cli, 'Settings', settings_class_mock)
+    monkeypatch.setattr(cli, 'build_site', build_site_mock)
+
+    assert cli.build(argparse.Namespace()) == 0
+
+    settings_class_mock.assert_called_once_with(pathlib.Path.cwd() / 'wesley.toml')
+    build_site_mock.assert_called_once_with(settings_mock)
+
+    outerr = capsys.readouterr()
+    assert 'Building wesley project' in outerr.out
+    assert WESLEY in outerr.out
+    assert not outerr.err
+
+
+def test_build_settings_errors(capsys, monkeypatch) -> None:
+    """When called with invalid settings, `build` prints an error message."""
+    settings_mock = mock.Mock(spec=settings.Settings, errors=['wesley threw up'])
+    settings_class_mock = mock.Mock(spec=type, return_value=settings_mock)
+    build_site_mock = mock.Mock(spec=build.build_site, return_value=[])
+
+    monkeypatch.setattr(cli, 'Settings', settings_class_mock)
+    monkeypatch.setattr(cli, 'build_site', build_site_mock)
+
+    assert cli.build(argparse.Namespace()) == 1
+
+    outerr = capsys.readouterr()
+    assert not outerr.out
+    assert 'wesley settings invalid' in outerr.err
+    assert '  - wesley threw up' in outerr.err
+
+
+def test_build_build_errors(capsys, monkeypatch) -> None:
+    """When build errors occur, `build` prints an error message."""
+    settings_mock = mock.Mock(spec=settings.Settings, errors=[])
+    settings_class_mock = mock.Mock(spec=type, return_value=settings_mock)
+    build_site_mock = mock.Mock(spec=build.build_site, return_value=['wesley threw up'])
+
+    monkeypatch.setattr(cli, 'Settings', settings_class_mock)
+    monkeypatch.setattr(cli, 'build_site', build_site_mock)
+
+    assert cli.build(argparse.Namespace()) == 1
+
+    outerr = capsys.readouterr()
+    assert 'Building wesley' in outerr.out
+    assert WESLEY not in outerr.out
+    assert 'wesley settings invalid' not in outerr.err
+    assert '  - wesley threw up' in outerr.err
 
 
 @pytest.mark.parametrize(
@@ -106,7 +161,9 @@ def test_init_directory(monkeypatch) -> None:
 
     cli.init_directory(path)
 
-    open_mock.assert_called_once_with(SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz')
+    open_mock.assert_called_once_with(
+        SOURCE_DIR / 'templates' / 'project.tar.gz', 'r:gz'
+    )
     tarfile_mock.extractall.assert_called_once_with(path)
 
 
