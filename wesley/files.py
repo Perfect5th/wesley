@@ -73,7 +73,7 @@ class GenericFileObject(FileObject):
         """
         target_path = self.target_dir / self.path.name
 
-        target_path.mkdir(exist_ok=True)
+        target_path.parent.mkdir(exist_ok=True)
         target_path.write_bytes(self.path.read_bytes())
 
 
