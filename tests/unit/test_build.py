@@ -27,7 +27,7 @@ def test_build_site(monkeypatch) -> None:
     """`build_site` results in a tree of HTML files mirroring the Markdown files in
     'site'.
     """
-    mock_settings = mock.Mock()
+    mock_settings = mock.Mock(spec=settings.Settings, source='site', target='_site')
     is_dir_mock = mock.Mock(spec=pathlib.Path.is_dir, return_value=True)
     walk_dir_mock = mock.Mock(
         spec=build._walk_dir,
@@ -53,7 +53,7 @@ def test_build_site(monkeypatch) -> None:
 
 def test_build_site_not_dir(monkeypatch) -> None:
     """`build_site` returns a single error if 'site' is not a directory."""
-    mock_settings = mock.Mock(spec=settings.Settings)
+    mock_settings = mock.Mock(spec=settings.Settings, source='site', target='_site')
     is_dir_mock = mock.Mock(spec=pathlib.Path.is_dir, return_value=False)
 
     monkeypatch.setattr(pathlib.Path, 'is_dir', is_dir_mock)
@@ -67,7 +67,7 @@ def test_build_site_not_dir(monkeypatch) -> None:
 
 def test_build_site_file_exists(monkeypatch) -> None:
     """`build_site` returns a single error is 'site' is an existing file."""
-    mock_settings = mock.Mock(spec=settings.Settings)
+    mock_settings = mock.Mock(spec=settings.Settings, source='site', target='_site')
     is_dir_mock = mock.Mock(spec=pathlib.Path.is_dir, return_value=True)
     mkdir_mock = mock.Mock(pathlib.Path().mkdir, side_effect=FileExistsError())
 
@@ -84,7 +84,7 @@ def test_build_site_file_exists(monkeypatch) -> None:
 
 def test_build_site_file_object_exceptions(monkeypatch) -> None:
     """`build_site` returns as many errors as there are `FileObjectException`s."""
-    mock_settings = mock.Mock(spec=settings.Settings)
+    mock_settings = mock.Mock(spec=settings.Settings, source='site', target='_site')
     is_dir_mock = mock.Mock(spec=pathlib.Path.is_dir, return_value=True)
     walk_dir_mock = mock.Mock(
         spec=build._walk_dir,

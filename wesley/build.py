@@ -29,20 +29,20 @@ def build_site(settings: Settings) -> list[str]:
     :param settings: The wesley site settings.
     :returns: Any accrued error messages.
     """
-    site_path = pathlib.Path.cwd() / 'site'
+    source_path = pathlib.Path.cwd() / settings.source
 
-    if not site_path.is_dir():
-        return ['./site is not a directory']
+    if not source_path.is_dir():
+        return [f'{settings.source} is not a directory']
 
-    output_path = pathlib.Path.cwd() / '_site'
+    target_path = pathlib.Path.cwd() / settings.target
 
     try:
-        output_path.mkdir(exist_ok=True)
+        target_path.mkdir(exist_ok=True)
     except FileExistsError:
-        return ['./_site exists and is not a directory']
+        return [f'{target_path} exists and is not a directory']
 
     errors = []
-    for path in _walk_dir(site_path):
+    for path in _walk_dir(source_path):
         try:
             FileObject.from_path(path, settings).write()
         except FileObjectException as e:
