@@ -26,4 +26,7 @@ class Settings:
 
     def __init__(self, toml_path: pathlib.Path) -> None:
         """TODO: this is a stub"""
+        self.source = 'site'
+        self.target = '_site'
+
         self.errors: list[str] = []

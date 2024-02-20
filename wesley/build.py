@@ -18,7 +18,7 @@ not, see <https://www.gnu.org/licenses/>.
 import pathlib
 from collections.abc import Iterator
 
-from .files import FileObject
+from .files import FileObject, FileObjectException
 from .settings import Settings
 
 
@@ -41,10 +41,14 @@ def build_site(settings: Settings) -> list[str]:
     except FileExistsError:
         return ['./_site exists and is not a directory']
 
+    errors = []
     for path in _walk_dir(site_path):
-        FileObject.from_path(path).write()
+        try:
+            FileObject.from_path(path, settings).write()
+        except FileObjectException as e:
+            errors.append(str(e))
 
-    return []
+    return errors
 
 
 def _walk_dir(dir: pathlib.Path) -> Iterator[pathlib.Path]:
