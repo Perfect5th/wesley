@@ -30,3 +30,6 @@ class Settings:
         self.target = '_site'
 
         self.errors: list[str] = []
+
+
+jinja_env = object()  # TODO: this is a stub
